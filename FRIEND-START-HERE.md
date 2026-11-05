@@ -4,6 +4,10 @@ This is the **assistant-first** version of The Balancing Act. The older calendar
 
 ## Preview in a minute
 
+GitHub repository: https://github.com/braydenwatson1/AI-Schedule-App-ENT
+
+GitHub Pages preview address (requires Pages enabled and a successful deployment): https://braydenwatson1.github.io/AI-Schedule-App-ENT/
+
 - Download the repository ZIP and extract it, or clone the repository.
 - Open `public/standalone.html` in a browser. On Windows you can also double-click `Open Demo.cmd`.
 - To edit with live source files, install Node.js 24 or later, then run `node server/preview.mjs`. Open http://localhost:4174 and reload after changes. No package installation or API credentials are needed for the demo.
@@ -28,6 +32,8 @@ This is the **assistant-first** version of The Balancing Act. The older calendar
 Use a branch for each change, push it, and open a pull request so the other person can review it. Pull the latest shared branch before starting another change. Each developer uses their own ignored `.env` for private credentials; never copy keys into the demo, a prompt, or a commit.
 
 ## Public previews that follow changes
+
+GitHub Pages can serve the generated `docs/` directory from the `main` branch. `node build-demo.mjs` rebuilds both `public/standalone.html` and `docs/index.html`; commit both outputs with frontend changes. The deployed Pages site is the fictional interactive demo, never the private backend.
 
 The repository includes `netlify.toml`. In the Netlify project, connect this GitHub repository to continuous deployment. It builds with `node build-demo.mjs` and publishes `public/`. Changes pushed to the configured production branch update that demo after a successful deploy. Enable/configure Deploy Previews in Netlify if you want a preview for pull requests.
 
