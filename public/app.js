@@ -9,7 +9,7 @@ const syncWarning=element('div','notice');syncWarning.id='sync-warning';syncWarn
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,5500);}
 // Wizard of Oz signup: the Google Apps Script web app URL (ends in /exec) that adds each contact
 // to the signup Google Sheet. See tools/signup-sheet/README.md. While empty, contacts are not stored or sent.
-const SIGNUP_ENDPOINT='';
+const SIGNUP_ENDPOINT='https://script.google.com/macros/s/AKfycby4y9xZgRrxz27wnVBex-kyuowbk5IrqQk-1wO9qcnczcuHiH0GsI_KIrfcLlPYIOLt/exec';
 const SIGNUP_TEXT='Quick question while you’re here: The Balancing Act isn’t live yet. Want a heads-up when you can join? Leave your email or phone number and we’ll let you know.';
 function nextSignupGap(){return 2+Math.floor(Math.random()*2);}
 function maybeAskSignup(){if(!DEMO||data.signupDone)return;data.wozCount=(data.wozCount||0)+1;if(!data.wozNext)data.wozNext=nextSignupGap();if(data.wozCount<data.wozNext)return;data.wozNext=data.wozCount+nextSignupGap();for(const m of data.messages)if(m.signup==='open')m.signup='dismissed';data.messages.push({role:'assistant',text:SIGNUP_TEXT,signup:'open'});}
