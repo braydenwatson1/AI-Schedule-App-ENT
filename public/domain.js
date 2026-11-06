@@ -42,10 +42,10 @@ export function demoSeed(){const now=Date.now(),at=n=>new Date(now+n*3600000).to
 // Demo-only reminder parser for the Wizard of Oz test. It reads plain phrases such as
 // "remind me to call mom Friday at 5pm" and returns a task proposal. Nothing leaves the browser.
 const WEEKDAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-export function reminderFromText(text,timezone,now=new Date()){
+export function reminderFromText(text,timezone,now=new Date(),skipTrigger=false){
  const lower=text.toLowerCase().replace(/[’']/g,'\'');
  const trigger=/\b(remind me|set (?:a |an )?reminder|reminder|remember to|don't let me forget|add (?:a )?(?:task|to-?do))\b/.test(lower)||(/\b(today|tonight|tomorrow|tomrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week)\b/.test(lower)&&/^(?:i need to |i have to |i should |need to )?(buy|shop|pick up|call|text|email|pay|book|schedule|clean|finish|send|return|order|renew|water|feed|grab)\b/.test(lower));
- if(!trigger)return null;
+ if(!trigger&&!skipTrigger)return null;
  const p=zonedParts(now,timezone),base=new Date(`${p.year}-${p.month}-${p.day}T12:00:00Z`);let days=0,dateWords=[];
  const take=re=>{const m=lower.match(re);if(m)dateWords.push(m[0]);return m;};
  let m;
@@ -53,7 +53,7 @@ export function reminderFromText(text,timezone,now=new Date()){
  else if(take(/\b(today|tonight)\b/))days=0;
  else if(take(/\bnext week\b/))days=7;
  else if((m=take(/\bin (\d{1,2}|a|one|two|three|four|five|six|seven) (day|days|week|weeks)\b/))){const n={a:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7}[m[1]]||Number(m[1]);days=/week/.test(m[2])?n*7:n;}
- else if((m=take(/\b(?:on |this |next )?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/))){days=(WEEKDAYS.indexOf(m[1])-base.getUTCDay()+7)%7;if(!days||/^next /.test(m[0]))days+=days?0:7;}
+ else if((m=take(/\b(?:on |this |next )?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/))){days=(WEEKDAYS.indexOf(m[1])-base.getUTCDay()+7)%7;if(!days&&/^next /.test(m[0]))days=7;}
  else if((m=take(/\b(?:on )?(\d{1,2})\/(\d{1,2})\b/))){const target=new Date(Date.UTC(base.getUTCFullYear(),Number(m[1])-1,Number(m[2]),12));if(target<base)target.setUTCFullYear(target.getUTCFullYear()+1);days=Math.round((target-base)/86400000);}
  const due=new Date(base.getTime()+days*86400000).toISOString().slice(0,10);
  let time='';
@@ -70,9 +70,30 @@ export function reminderFromText(text,timezone,now=new Date()){
  const t=title.toLowerCase(),category=/\b(meeting|boss|report|client|project|work|deadline|presentation|slides|invoice)\b/.test(t)?'work':/\b(mom|dad|kid|kids|son|daughter|school|family|birthday|grandma|grandpa|wife|husband|sister|brother|baby|practice|waiver)\b/.test(t)?'family':/\b(grocer|detergent|laundry|clean|trash|dishes|bills?|rent|dog|cat|plants?|milk|eggs|dinner|house|home)\b/.test(t)?'home':'personal';
  return {title,due,time,category,days};
 }
+// Demo-only appointment parser: "put my dentist appointment tomorrow at 4pm in the schedule",
+// "I have a haircut Friday at 2". Returns an event proposal, or {needsTime} when no time was given.
+const EVENT_WORDS=/\b(appointment|appt|meeting|dentist|dentest|dentists|doctor|doctors|dr|checkup|check-up|physical|haircut|interview|lunch|dinner|breakfast|brunch|coffee|game|practice|class|lesson|party|recital|conference|flight|vet|therapy|session|date night|concert|recital|rehearsal|shift|tutoring)\b/;
+export function appointmentFromText(text,timezone,now=new Date()){
+ const lower=text.toLowerCase().replace(/[’']/g,'\'');
+ if(/\b(remind me|reminder|remember|don't let me forget|cancel|draft|email)\b/.test(lower)||/^\s*(what|when|where|why|how|is|are|do|does)\b/.test(lower))return null;
+ const calendarAsk=/\b(put|add|schedule|book|set up|make|create|pencil)\b/.test(lower)&&/\b(calendar|schedule|appointment|appt|meeting)\b/.test(lower);
+ const hasWhen=/\b(today|tonight|tomorrow|tomrow|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|in \w+ (day|days|week|weeks))\b|\d{1,2}\/\d{1,2}|\d\s*(am|pm|a\.m\.|p\.m\.)|\b(at|around) \d{1,2}|\bnoon\b/.test(lower);
+ if(!hasWhen||!(calendarAsk||EVENT_WORDS.test(lower)))return null;
+ const r=reminderFromText(text,timezone,now,true);
+ let title=(r.title||'').replace(/\bdentest\b/ig,'dentist').replace(/\bdoctors\b/ig,'doctor\'s').replace(/\bdentists\b/ig,'dentist').replace(/^(?:please |can you |could you )*(?:put|add|schedule|book|set up|make|create|pencil in|pencil)\s+/i,'').replace(/^(?:i have|i've got|i got|there's|there is|we have)\s+/i,'').replace(/\b(?:in|on|to|into)\s+(?:the|my)\s+(?:schedule|calendar)\b/ig,'').replace(/^(?:my|a|an|the|our)\s+/i,'').replace(/\s+(?:on|at|for|in)\s*$/i,'').replace(/\s{2,}/g,' ').trim();
+ if(!title)title='Appointment';
+ if(/^(dentist|doctor|vet|eye doctor|dr\.? \w+)$/i.test(title))title+=' appointment';
+ title=title.charAt(0).toUpperCase()+title.slice(1);
+ if(!r.time)return {needsTime:true,title,due:r.due,days:r.days};
+ const start=localToISO(`${r.due}T${r.time}`,timezone),minutes=/\b(lunch|dinner|meeting|class|game|practice|party|interview|concert)\b/i.test(title)?60:30;
+ return {title,due:r.due,time:r.time,days:r.days,start,end:new Date(Date.parse(start)+minutes*60000).toISOString(),category:/\b(meeting|interview|conference|client|shift|work)\b/i.test(title)?'work':/\b(practice|game|recital|school|kid|family|party)\b/i.test(title)?'family':'personal'};
+}
 export function formatReminderTime(time){if(!time)return '';const [h,m]=time.split(':').map(Number);return `${h%12||12}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`;}
 function reminderWhen(r){const day=r.days===0?'today':r.days===1?'tomorrow':new Date(r.due+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'long',month:'short',day:'numeric'});return day+(r.time?' at '+formatReminderTime(r.time):'');}
 export function demoPlan(text,data){const lower=text.toLowerCase(),timezone=data.settings.timezone;
+ let appointment=null;try{appointment=appointmentFromText(text,timezone);}catch(e){return {reply:e.message};}
+ if(appointment?.needsTime)return {reply:`What time is your ${appointment.title.toLowerCase()}? Try something like “${appointment.title.toLowerCase()} ${reminderWhen({...appointment,time:''})} at 4pm.”`};
+ if(appointment)return {reply:`Sounds good. I’ll add “${appointment.title}” to your calendar ${reminderWhen(appointment)}. Check the details and approve it.`,action:{type:'create_event',title:appointment.title,start:appointment.start,end:appointment.end,category:appointment.category}};
  const reminder=reminderFromText(text,timezone);
  if(reminder?.missing)return {reply:'Happy to. What would you like me to remind you about?'};
  if(reminder){const what=(reminder.title.charAt(0).toLowerCase()+reminder.title.slice(1)).replace(/\bmy\b/g,'your').replace(/\bme\b/g,'you').replace(/\bmyself\b/g,'yourself');return {reply:`Got it. I’ll remind you ${/^(the|a|an|your|our|his|her|their)\b/.test(what)?'about':'to'} ${what} ${reminderWhen(reminder)}. Take a quick look and approve it.`,action:{type:'create_task',title:reminder.title,due:reminder.due,time:reminder.time,category:reminder.category}};}
