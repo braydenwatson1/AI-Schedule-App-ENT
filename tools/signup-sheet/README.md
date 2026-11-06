@@ -13,7 +13,7 @@ The demo's "Get notified when we go live" card sends each email or phone number 
 7. Copy the **Web app URL**. It ends in `/exec`.
 8. Paste it into `SIGNUP_ENDPOINT` near the top of `public/app.js`, then run `node build-demo.mjs`.
 
-The first signup adds a header row: Submitted at, Email, Phone, Source.
+The first signup adds a header row: Submitted at, Email, Phone, Source, Name.
 
 ## Notes
 
