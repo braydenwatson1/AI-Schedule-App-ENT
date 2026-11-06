@@ -57,7 +57,9 @@ export function reminderFromText(text,timezone,now=new Date(),skipTrigger=false)
  else if((m=take(/\b(?:on )?(\d{1,2})\/(\d{1,2})\b/))){const target=new Date(Date.UTC(base.getUTCFullYear(),Number(m[1])-1,Number(m[2]),12));if(target<base)target.setUTCFullYear(target.getUTCFullYear()+1);days=Math.round((target-base)/86400000);}
  const due=new Date(base.getTime()+days*86400000).toISOString().slice(0,10);
  let time='';
- if((m=take(/\b(?:at |by |around )?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/))||(m=take(/\b(?:at|by|around) (\d{1,2})(?::(\d{2}))?\b/))){let h=Number(m[1]);const min=m[2]||'00',suffix=m[3]||'';if(/p/.test(suffix)&&h<12)h+=12;if(/a/.test(suffix)&&h===12)h=0;if(!suffix&&h>=1&&h<=7)h+=12;if(h<24&&Number(min)<60)time=`${String(h).padStart(2,'0')}:${min}`;}
+ const range=lower.match(/\b(?:from |at )?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?\s*(?:to|until|till|-|–)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/);
+ if(range&&!/\//.test(range[0])){dateWords.push(range[0]);let h=Number(range[1]);const min=range[2]||'00',endSuffix=range[6],endH=Number(range[4])%12+(/p/.test(endSuffix)?12:0);let suffix=range[3]||'';if(!suffix){suffix=endSuffix;if(/p/.test(suffix)&&(h%12)+12>endH)suffix='am';}if(/p/.test(suffix)&&h<12)h+=12;if(/a/.test(suffix)&&h===12)h=0;if(h<24&&Number(min)<60)time=`${String(h).padStart(2,'0')}:${min}`;}
+ else if((m=take(/\b(?:at |by |around )?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/))||(m=take(/\b(?:at|by|around) (\d{1,2})(?::(\d{2}))?\b/))){let h=Number(m[1]);const min=m[2]||'00',suffix=m[3]||'';if(/p/.test(suffix)&&h<12)h+=12;if(/a/.test(suffix)&&h===12)h=0;if(!suffix&&h>=1&&h<=7)h+=12;if(h<24&&Number(min)<60)time=`${String(h).padStart(2,'0')}:${min}`;}
  else if(take(/\b(?:at )?noon\b/))time='12:00';
  else if(/\btonight\b|\b(this |tomorrow )?evening\b/.test(lower)){take(/\b(this |tomorrow )?evening\b/);time='19:00';}
  else if(take(/\b(?:in the |this )?morning\b/))time='09:00';
@@ -72,20 +74,25 @@ export function reminderFromText(text,timezone,now=new Date(),skipTrigger=false)
 }
 // Demo-only appointment parser: "put my dentist appointment tomorrow at 4pm in the schedule",
 // "I have a haircut Friday at 2". Returns an event proposal, or {needsTime} when no time was given.
-const EVENT_WORDS=/\b(appointment|appt|meeting|dentist|dentest|dentists|doctor|doctors|dr|checkup|check-up|physical|haircut|interview|lunch|dinner|breakfast|brunch|coffee|game|practice|class|lesson|party|recital|conference|flight|vet|therapy|session|date night|concert|recital|rehearsal|shift|tutoring)\b/;
+const EVENT_WORDS=/\b(appointment|appt|meeting|meetings|meet|meetup|call with|zoom|teams call|standup|stand-up|1:1|one-on-one|sync|huddle|review|demo|workshop|seminar|webinar|lecture|exam|test|quiz|study session|office hours|dentist|dentest|dentists|doctor|doctors|dr|checkup|check-up|physical|haircut|interview|lunch|dinner|breakfast|brunch|coffee|drinks|game|practice|class|lesson|party|recital|conference|flight|vet|therapy|session|date|date night|concert|rehearsal|shift|tutoring|gym|workout|yoga|church|service|wedding|shower|pickup|pick-up|drop-off|carpool|event|hangout|visit)\b/;
 export function appointmentFromText(text,timezone,now=new Date()){
  const lower=text.toLowerCase().replace(/[’']/g,'\'');
- if(/\b(remind me|reminder|remember|don't let me forget|cancel|draft|email)\b/.test(lower)||/^\s*(what|when|where|why|how|is|are|do|does)\b/.test(lower))return null;
- const calendarAsk=/\b(put|add|schedule|book|set up|make|create|pencil)\b/.test(lower)&&/\b(calendar|schedule|appointment|appt|meeting)\b/.test(lower);
- const hasWhen=/\b(today|tonight|tomorrow|tomrow|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|in \w+ (day|days|week|weeks))\b|\d{1,2}\/\d{1,2}|\d\s*(am|pm|a\.m\.|p\.m\.)|\b(at|around) \d{1,2}|\bnoon\b/.test(lower);
- if(!hasWhen||!(calendarAsk||EVENT_WORDS.test(lower)))return null;
+ if(/\b(remind me|reminder|remember to|don't let me forget|cancel)\b/.test(lower)||(/\bemail\b/.test(lower)&&/\b(draft|send|write)\b/.test(lower))||/^\s*(what|when|where|why|how|is|are|do|does|did|can i|should i)\b/.test(lower))return null;
+ const calendarAsk=/\b(put|add|schedule|book|set up|make|create|pencil|plan)\b/.test(lower)&&/\b(calendar|schedule|appointment|appt|meeting|event)\b/.test(lower);
+ const hasWhen=/\b(today|tonight|tomorrow|tomrow|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|in \w+ (day|days|week|weeks))\b|\d{1,2}\/\d{1,2}|\d\s*(am|pm|a\.m\.|p\.m\.)|\b(at|around|from) \d{1,2}|\bnoon\b/.test(lower);
+ // A specific clock time ("at 3", "4pm", "noon") is treated as something for the calendar.
+ const hasClock=/\d\s*(am|pm|a\.m\.|p\.m\.)|\b(at|around|from) \d{1,2}(:\d{2})?\b|\bnoon\b/.test(lower);
+ if(!hasWhen||!(calendarAsk||hasClock||EVENT_WORDS.test(lower)))return null;
  const r=reminderFromText(text,timezone,now,true);
- let title=(r.title||'').replace(/\bdentest\b/ig,'dentist').replace(/\bdoctors\b/ig,'doctor\'s').replace(/\bdentists\b/ig,'dentist').replace(/^(?:please |can you |could you )*(?:put|add|schedule|book|set up|make|create|pencil in|pencil)\s+/i,'').replace(/^(?:i have|i've got|i got|there's|there is|we have)\s+/i,'').replace(/\b(?:in|on|to|into)\s+(?:the|my)\s+(?:schedule|calendar)\b/ig,'').replace(/^(?:my|a|an|the|our)\s+/i,'').replace(/\s+(?:on|at|for|in)\s*$/i,'').replace(/\s{2,}/g,' ').trim();
- if(!title)title='Appointment';
+ let title=(r.title||'').replace(/\bdentest\b/ig,'dentist').replace(/\bdoctors\b/ig,'doctor\'s').replace(/\bdentists\b/ig,'dentist').replace(/^(?:please |can you |could you )*(?:put|add|schedule|book|set up|make|create|pencil in|pencil)\s+/i,'').replace(/^(?:i have|i've got|i got|there's|there is|we have)\s+/i,'').replace(/\b(?:in|on|to|into)\s+(?:the|my)\s+(?:schedule|calendar)\b/ig,'').replace(/^(?:my|a|an|the|our)\s+/i,'').replace(/\b(?:to|until|till|-|–)\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?(?=\s|$)/i,'').replace(/^(?:from)\s+/i,'').replace(/\s+(?:on|at|for|in|from)\s*$/i,'').replace(/\s{2,}/g,' ').trim();
+ if(!title)title='Meeting';
  if(/^(dentist|doctor|vet|eye doctor|dr\.? \w+)$/i.test(title))title+=' appointment';
  title=title.charAt(0).toUpperCase()+title.slice(1);
  if(!r.time)return {needsTime:true,title,due:r.due,days:r.days};
- const start=localToISO(`${r.due}T${r.time}`,timezone),minutes=/\b(lunch|dinner|meeting|class|game|practice|party|interview|concert)\b/i.test(title)?60:30;
+ const start=localToISO(`${r.due}T${r.time}`,timezone);let minutes=/\b(lunch|dinner|meeting|class|game|practice|party|interview|concert)\b/i.test(title)?60:30;
+ // "from 2 to 3:30pm" or "2-4pm" sets the end time.
+ const until=lower.match(/\d(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:to|until|till|-|–)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?/);
+ if(until){const [sh,sm]=r.time.split(':').map(Number);let eh=Number(until[1]);const em=Number(until[2]||0);if(/p/.test(until[3]||'')&&eh<12)eh+=12;if(!until[3]&&eh*60+em<=sh*60+sm&&eh<12)eh+=12;const diff=eh*60+em-(sh*60+sm);if(diff>0&&diff<=720)minutes=diff;}
  return {title,due:r.due,time:r.time,days:r.days,start,end:new Date(Date.parse(start)+minutes*60000).toISOString(),category:/\b(meeting|interview|conference|client|shift|work)\b/i.test(title)?'work':/\b(practice|game|recital|school|kid|family|party)\b/i.test(title)?'family':'personal'};
 }
 export function formatReminderTime(time){if(!time)return '';const [h,m]=time.split(':').map(Number);return `${h%12||12}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`;}
