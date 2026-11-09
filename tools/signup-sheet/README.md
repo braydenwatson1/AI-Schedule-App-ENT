@@ -14,7 +14,24 @@ The demo's "Get notified when we go live" spots (the chat card, the welcome-page
 
 `SIGNUP_TOKEN` in `Code.gs` must match `SIGNUP_TOKEN` in `public/app.js`. Publish the site change before deploying a script that checks a new token. Otherwise signups from the live page get discarded.
 
-The sheet's columns are: Submitted at, Email, Phone, Source, Name.
+The signup tab's columns are: Submitted at, Email, Phone, Source, Name, Visitor.
+
+## Demo stats (visitors, pages, signup rate)
+
+The same script also counts anonymous page views, so the signup rate can be worked out in one place. After the first visit following an update, two tabs appear on their own:
+
+- **Visits**: one row each time a visitor opens a page for the first time in a browser tab: Time, Visitor (a random ID), Page, and Came from (an ad link's `utm_source`, another website's name, or `direct`).
+- **Stats**: formulas that update by themselves. Total visitors, visitors who signed up, the signup rate, unique visitors on each page (Welcome, Personal assistant, Next 24 hours, Daily brief, Email, Connections, Build & setup guide), signups by where they signed up, and visitors by where they came from.
+
+How it counts:
+
+- A visitor is one browser. Clicking **Start over** counts the next person as a new visitor, which suits handing a laptop between testers.
+- Signups made before stats tracking started have no Visitor ID, so they appear in "All signups, including ones before tracking" but not in the signup rate.
+- Open the demo once with `?notrack` at the end of the address (for example `https://braydenwatson1.github.io/AI-Schedule-App-ENT/?notrack`) on each of your own browsers so your testing isn't counted. `?track` turns counting back on.
+- For ads, add `?utm_source=facebook` (or `instagram`, and so on) to the ad's link to see how many visitors each one brings.
+- If the Stats tab gets deleted or broken, open Apps Script, choose `rebuildStats` in the function menu, and click **Run**.
+
+Page views never include names, contact details, or chat text. The Visitor ID on a signup row links that person's page views to their signup, which is what makes the per-person signup rate possible.
 
 ## What protects your account
 
@@ -22,6 +39,7 @@ The sheet's columns are: Submitted at, Email, Phone, Source, Name.
 - The script only appends rows. It has no `doGet` and never returns sheet data, so the public URL can't be used to read your signups.
 - Each request needs the shared token and an empty honeypot field. The email or phone number must look valid, and every field has a length limit. A leading `= + - @` can't start a formula.
 - It accepts at most 20 signups a minute and 500 a day, and it ignores the same contact again within 6 hours.
+- Page views only accept a page name from a fixed list and a short random ID, and are capped at 300 a minute and 20,000 a day.
 
 Limits to know about: the token is visible in the public page's code, so it only stops casual bots, not someone determined. "Anyone" access means the URL can still receive junk. The worst it can do is add rows, which you can delete.
 
