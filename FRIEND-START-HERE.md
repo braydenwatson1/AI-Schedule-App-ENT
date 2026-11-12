@@ -6,7 +6,7 @@ This is the **assistant-first** version of The Balancing Act. The older calendar
 
 GitHub repository: https://github.com/braydenwatson1/AI-Schedule-App-ENT
 
-GitHub Pages preview address (requires Pages enabled and a successful deployment): https://braydenwatson1.github.io/AI-Schedule-App-ENT/
+GitHub Pages preview address (requires Pages enabled and a successful deployment): https://thebalancingact.app/
 
 - Download the repository ZIP and extract it, or clone the repository.
 - Open `public/standalone.html` in a browser. On Windows you can also double-click `Open Demo.cmd`.
