@@ -152,6 +152,8 @@ function stored(kind,key){try{return window[kind].getItem(key)||'';}catch{return
 function save(kind,key,value){try{window[kind].setItem(key,value);}catch{}}
 {const q=new URLSearchParams(location.search);if(q.has('notrack'))save('localStorage',NOTRACK_KEY,'1');if(q.has('track'))save('localStorage',NOTRACK_KEY,'');}
 function trackingOff(){return !DEMO||!SIGNUP_ENDPOINT||stored('localStorage',NOTRACK_KEY)==='1'||!!navigator.webdriver;}
+// Microsoft Clarity session recordings and heatmaps (project zcurvzu9yz). Skipped with ?notrack, like the visit counts.
+if(!trackingOff()){(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","zcurvzu9yz");}
 let visitorFallback='';
 function newVisitorId(){const bytes=new Uint8Array(12);crypto.getRandomValues(bytes);return [...bytes].map(b=>b.toString(36).padStart(2,'0')).join('').slice(0,20);}
 function visitorId(){let id=stored('localStorage',VISITOR_KEY)||visitorFallback;if(!/^[a-z0-9]{10,40}$/.test(id)){id=newVisitorId();save('localStorage',VISITOR_KEY,id);}visitorFallback=id;return id;}
