@@ -27,7 +27,7 @@ How it counts:
 
 - A visitor is one browser. Clicking **Start over** counts the next person as a new visitor, which suits handing a laptop between testers.
 - Signups made before stats tracking started have no Visitor ID, so they appear in "All signups, including ones before tracking" but not in the signup rate.
-- Open the demo once with `?notrack` at the end of the address (for example `https://braydenwatson1.github.io/AI-Schedule-App-ENT/?notrack`) on each of your own browsers so your testing isn't counted. `?track` turns counting back on.
+- Open the demo once with `?notrack` at the end of the address (for example `https://thebalancingact.app/?notrack`) on each of your own browsers so your testing isn't counted. `?track` turns counting back on.
 - For ads, add `?utm_source=facebook` (or `instagram`, and so on) to the ad's link to see how many visitors each one brings.
 - If the Stats tab gets deleted or broken, open Apps Script, choose `rebuildStats` in the function menu, and click **Run**.
 
