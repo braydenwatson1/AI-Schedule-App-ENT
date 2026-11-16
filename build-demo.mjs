@@ -7,4 +7,6 @@ await writeFile(new URL('public/standalone.html',import.meta.url),output);
 await mkdir(new URL('docs/',import.meta.url),{recursive:true});
 await writeFile(new URL('docs/index.html',import.meta.url),output);
 await writeFile(new URL('docs/.nojekyll',import.meta.url),'');
+// Each tab has its own address (thebalancingact.app/calendar...). GitHub Pages serves docs/calendar.html there, so the same page loads and opens that tab.
+for(const view of ['assistant','calendar','connections','brief','email','setup'])await writeFile(new URL(`docs/${view}.html`,import.meta.url),output);
 console.log('Standalone demo built: public/standalone.html');
