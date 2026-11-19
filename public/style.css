@@ -8,3 +8,29 @@
 .sidebar{overflow-y:auto;overscroll-behavior:contain}@media (max-height:820px){.sidebar-label{margin-top:28px}.little-note{margin:16px 0;font-size:19px}.setup-link{padding:10px 0}}#start-over{font-weight:500}
 
 .signup-card.signup-done strong{font-size:19px;font-weight:500}.signup-card.signup-done p{font-size:14px;margin:6px 0 0}.signup-strip-done{font-size:16px!important}
+
+/* Landing page with the live assistant chat (demo) */
+.welcome-chat{padding:46px max(30px,6%) 40px;display:flex;flex-direction:column;justify-content:center;max-width:760px;min-width:0}
+.welcome-chat h2{font-size:39px;margin:6px 0 4px}
+.welcome-chat>p{font-size:15px;line-height:1.75;margin:0 0 18px;color:#5d6a60}
+.welcome-chat .conversation-panel{height:min(560px,calc(100dvh - 250px));min-height:430px}
+.welcome-chat .signup-strip{margin-top:22px}
+.welcome-chat #open-full-demo{margin-top:16px;align-self:flex-start;text-align:left}
+.try-it{display:none}
+@media(max-width:1150px){.welcome-chat{padding:40px 30px}}
+@media(max-width:900px){.welcome-chat h2{font-size:33px}}
+@media(max-width:650px){
+.welcome-art{min-height:0;padding-bottom:30px}
+.welcome-chat{padding:26px 14px 34px}
+.welcome-chat>.eyebrow,.welcome-chat h2,.welcome-chat>p{padding:0 8px}
+.welcome-chat h2{font-size:30px}
+.welcome-chat>p{font-size:14px;margin-bottom:14px}
+.welcome-chat .conversation-panel{height:min(520px,calc(100dvh - 120px));min-height:400px}
+.welcome-chat .conversation-head .private-tag{display:none}
+.welcome-art h1{font-size:40px;letter-spacing:-1px}
+.welcome-art>div:nth-child(2){margin-top:26px}
+.welcome-art p{line-height:1.7;max-width:none}
+.welcome-chat>p{display:none}
+.try-it{display:inline-block;margin-top:8px;background:#e7eac8;color:var(--green);font-weight:600;font-size:15px;padding:12px 18px;border-radius:10px;text-decoration:none}
+.welcome-chat #open-full-demo{padding:0 8px}
+}
